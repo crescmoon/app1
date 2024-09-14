@@ -5,8 +5,33 @@ export const TETROMINOS = Object.freeze({
   O: 4,
   S: 5,
   T: 6,
-  Z: 7
+  Z: 7,
+  NULL: 8
 })
+export const getTypeString = (type) => {
+  switch (type) {
+    case TETROMINOS.I:
+      return 'I';
+    case TETROMINOS.J:
+      return 'J';
+    case TETROMINOS.L:
+      return 'L';
+    case TETROMINOS.O:
+      return 'O';
+    case TETROMINOS.S:
+      return 'S';
+    case TETROMINOS.T:
+      return 'T';
+    case TETROMINOS.Z:
+      return 'Z';
+    default:
+      return 'NULL';
+  }
+}
+
+export function getRandom() {
+  return Math.floor(Math.random() * 7) + 1;
+}
 
 export class Tetromino {
   constructor(origin, type, direction) {

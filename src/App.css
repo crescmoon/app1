@@ -4,7 +4,7 @@
   background-color: #000;
 }
 
-.next-panel {
+.panel {
   display: inline-block;
   margin-left: 20px;
   margin-right: 20px;
@@ -15,17 +15,6 @@
   border: 2px solid #333;
   width: 120px;
   height: auto;
-}
-
-.center-panel {
-  display: inline-block;
-  margin-left: 20px;
-  margin-right: 20px;
-}
-
-.right-panel {
-  display: inline-block;
-  margin-left: 20px;
 }
 
 .tetris-grid {
