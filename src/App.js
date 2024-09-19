@@ -4,6 +4,8 @@ import {TETROMINOS, Tetromino, getCellClassName, getRandom, getTypeString} from 
 
 const GRID_WIDTH = 10;
 const GRID_HEIGHT = 20;
+const TICK = 10;
+const LONGTICK = 100;  // Represents number of ticks before a long tick
 
 function App() {
   const [upcomingList, setUpcomingList] = useState([TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL]);
@@ -11,7 +13,9 @@ function App() {
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [grid, setGrid] = useState([]);
+  const [tick, setTick] = useState(0);
 
+  // Creating an empty grid
   const createGrid = () => {
     const grid = [];
     for (let r = 0; r < GRID_HEIGHT; r++) {
@@ -23,19 +27,61 @@ function App() {
     return grid;
   }
 
+  // What to do on initialization or restart
   const init = useCallback(() => {
     setUpcomingList([getRandom(), getRandom(), getRandom(), getRandom(), getRandom()]);
     setHeld(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
     setPlaced([]);
     setDropping(new Tetromino({ x: 4, y: 1}, getRandom(), 0));
     setGrid(createGrid());
+    setTick(0);
   }, []);
 
+  // Initial call to init()
   useEffect(() => {
     init();
   }, [init]);
 
+  // Tick handler
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(tick => tick + 1);
+      // TODO: Associate key press with commands
+    }, TICK);
+    return () => clearInterval(interval);
+  }, []);
 
+  // Long tick handler
+  useEffect(() => {
+    if (tick === LONGTICK) {
+      // TODO: Handle what to happen every `LONGTICK` ticks
+      // If `dropping` can drop: drop `dropping` by one cell
+
+      // If `dropping` can't drop:
+        // Save `dropping` to `placed`, deselect `dropping`
+        // Read `placed` and clear full rows
+        // Update `upcomingList` and select the first element as `dropping`
+        // Place `dropping` at the top of the grid
+
+      setTick(0);
+    }
+  }, [tick]);
+
+  // TODO: Key press handler
+
+  // TODO: Implement how the dropping block reacts to movement commands in TetrisInternal.js
+
+  // TODO: Implement the hold command
+
+  // TODO: Implement the score system
+
+  // TODO: Implement the game over system
+
+  // TODO: Implement the pause system
+
+
+
+  // Tetromino image loader
   const ImgLoader = (props) => {
     return (
       <img
@@ -52,6 +98,7 @@ function App() {
     );
   };
 
+  // Grid loader
   const GridLoader = (props) => {
     placed.forEach((cell) => {
       if (cell.x >= 0 && cell.x < GRID_WIDTH && cell.y >= 0 && cell.y < GRID_HEIGHT) {
@@ -80,6 +127,7 @@ function App() {
     )
   };
 
+  // Hold panel
   const HoldPanel = (props) => {
     return (
       <div className="panel">
@@ -95,6 +143,7 @@ function App() {
     );
   }
 
+  // Center panel
   const CenterPanel = (props) => {
     return (
       <div className="panel">
@@ -106,6 +155,7 @@ function App() {
     );
   }
 
+  // Right panel
   const RightPanel = (props) => {
     return (
       <div className="panel">
