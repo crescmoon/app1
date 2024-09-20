@@ -61,14 +61,12 @@ function App() {
 
   // Save tetromino to `placed` and clear full rows, return number of rows cleared
   const saveToPlaced = useCallback((tetromino) => {
-    // First save the tetromino to `placed`
     let newPlaced = [...placed];
     let cells = tetromino.getCellCoordinates().map((cell) => {
       return {x: cell.x, y: cell.y, type: tetromino.type};
     });
     newPlaced = newPlaced.concat(cells);
 
-    // then clear full rows
     let rows = new Array(GRID_HEIGHT).fill(0);
     newPlaced.forEach((cell) => {
       rows[cell.y]++;
@@ -86,28 +84,6 @@ function App() {
       }
     );
 
-    setPlaced(newPlaced);
-    return rowsToClear.length;
-  }, [placed]);
-
-  // Clear full rows
-  const clearFullRows = useCallback(() => {
-    let rows = new Array(GRID_HEIGHT).fill(0);
-    placed.forEach((cell) => {
-      rows[cell.y]++;
-    });
-    let rowsToClear = rows.filter((row) => row === GRID_WIDTH);
-    let newPlaced = placed.filter((cell) => rows[cell.y] < GRID_WIDTH).map(
-      (cell) => {
-        let newCell = {x: cell.x, y: cell.y, type: cell.type};
-        rowsToClear.forEach((row) => {
-          if (cell.y < row) {
-            newCell.y++;
-          }
-        })
-        return newCell;
-      }
-    );
     setPlaced(newPlaced);
     return rowsToClear.length;
   }, [placed]);
@@ -178,8 +154,6 @@ function App() {
   // TODO: Implement how the dropping block reacts to movement commands in TetrisInternal.js
 
   // TODO: Implement the hold command
-
-  // TODO: Implement the score system
 
   // TODO: Implement the game over system
 
