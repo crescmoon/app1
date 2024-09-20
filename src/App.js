@@ -15,7 +15,7 @@ function App() {
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [tick, setTick] = useState(0);
-  const [keyPressed, setKeyPressed] = useState('');
+  const [keysHeldDown, setKeysHeldDown] = useState([]);
   const [score, setScore] = useState(0);
   const [debugMessage, setDebugMessage] = useState('');
 
@@ -49,7 +49,7 @@ function App() {
     let cells = tetromino.getCellCoordinates();
     for (let i = 0; i < 4; i++) {
       let cell = cells[i];
-      if (cell.x < 0 || cell.x >= GRID_WIDTH || cell.y < 0 || cell.y >= GRID_HEIGHT) {
+      if (cell.x < 0 || cell.x >= GRID_WIDTH || cell.y >= GRID_HEIGHT) {
         return true;
       }
       if (placed.find((placedCell) => placedCell.x === cell.x && placedCell.y === cell.y)) {
@@ -71,16 +71,22 @@ function App() {
     newPlaced.forEach((cell) => {
       rows[cell.y]++;
     });
-    let rowsToClear = rows.filter((row) => row === GRID_WIDTH);
+    let rowsToClear = [];
+    for (let i = 0; i < GRID_HEIGHT; i++) {
+      if (rows[i] === GRID_WIDTH) {
+        rowsToClear.push(i);
+      }
+    }
     newPlaced = newPlaced.filter((cell) => rows[cell.y] < GRID_WIDTH).map(
       (cell) => {
-        let newCell = {x: cell.x, y: cell.y, type: cell.type};
+        let newX = cell.x;
+        let newY = cell.y;
         rowsToClear.forEach((row) => {
           if (cell.y < row) {
-            newCell.y++;
+            newY++;
           }
         })
-        return newCell;
+        return {x: newX, y: newY, type: cell.type};
       }
     );
 
@@ -97,6 +103,49 @@ function App() {
     return popOut;
   }, [upcomingList]);
 
+  // Key press handler
+  const keyPressHandler = useCallback(() => {
+    keysHeldDown.forEach((obj) => {
+      if (!obj.new) return;
+      let keyPressed = obj.key;
+      if (keyPressed === 'ArrowLeft') {
+        let newDropping = dropping.moveLeft();
+        if (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+        }
+      } else if (keyPressed === 'ArrowRight') {
+        let newDropping = dropping.moveRight();
+        if (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+        }
+      } else if (keyPressed === 'ArrowDown') {
+        let newDropping = dropping.moveDown();
+        if (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+        }
+        setTick(0);
+      } else if (keyPressed === 'z') {
+        let newDropping = dropping.rotate(false);
+        if (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+        }
+      } else if (keyPressed === 'x') {
+        let newDropping = dropping.rotate(true);
+        if (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+        }
+      } else if (keyPressed === ' ') {
+        let newDropping = dropping.moveDown();
+        while (!isObstructed(newDropping)) {
+          setDropping(newDropping);
+          newDropping = newDropping.moveDown();
+        }
+        setTick(LONGTICK);
+      }
+      obj.new = false;
+    });
+  }, [keysHeldDown, dropping, isObstructed]); 
+
   // useEffect statements
   // Initial call to init()
   useEffect(() => {
@@ -107,10 +156,11 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(tick => tick + 1);
-      // TODO: Associate key press with commands
+      // Associate key press with commands
+      keyPressHandler();
     }, TICK);
     return () => clearInterval(interval);
-  }, []);
+  }, [dropping, isObstructed, keyPressHandler]);
 
   // Long tick handler
   useEffect(() => {
@@ -142,13 +192,19 @@ function App() {
   // Key press handler
   useEffect(() => {
     const handleKeyDown = (event) => {
-      setKeyPressed(event.key);
-    }
+      if (keysHeldDown.find((obj) => obj.key === event.key)) return;
+      setKeysHeldDown(keysHeldDown => [...keysHeldDown, {key: event.key, new: true}]);
+    };
+    const handleKeyUp = (event) => {
+      setKeysHeldDown(keysHeldDown => keysHeldDown.filter((obj) => obj.key !== event.key));
+    };
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     }
-  }, []);
+  }, [ keysHeldDown ]);
 
   // TODOs
   // TODO: Implement how the dropping block reacts to movement commands in TetrisInternal.js
@@ -216,9 +272,9 @@ function App() {
           Debug
         </h3>
         <div className="box">
-          <h3 style={{color: "#fff", textAlign: "center"}}>
-            {keyPressed}
-          </h3>
+          <h5 style={{color: "#fff", textAlign: "center"}}>
+            {`Keys: ${keysHeldDown.map((obj) => obj.key).join(', ')}`}
+          </h5>
           <h3 style={{color: "#fff", textAlign: "center"}}>
             {tick}
           </h3>
