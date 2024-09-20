@@ -29,6 +29,14 @@ export const getTypeString = (type) => {
   }
 }
 
+export function initialTopPosition(type) {
+  if (type === TETROMINOS.I || type === TETROMINOS.O) {
+    return {x: 4, y: 0};
+  } else {
+    return {x: 4, y: 1}
+  }
+}
+
 export function getRandom() {
   return Math.floor(Math.random() * 7) + 1;
 }
@@ -144,6 +152,11 @@ export class Tetromino {
       }
     }
   }
+
+  moveDown() {
+    return new Tetromino({x: this.origin.x, y: this.origin.y + 1}, this.type, this.direction);
+  }
+
 }
 
 export function getCellClassName(type) {
