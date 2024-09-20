@@ -122,8 +122,8 @@ function App() {
         let newDropping = dropping.moveDown();
         if (!isObstructed(newDropping)) {
           setDropping(newDropping);
+          setTick(0);  // Reset tick
         }
-        setTick(0);
       } else if (keyPressed === 'z') {
         let newDropping = dropping.rotate(false);
         if (!isObstructed(newDropping)) {
@@ -140,7 +140,7 @@ function App() {
           setDropping(newDropping);
           newDropping = newDropping.moveDown();
         }
-        setTick(LONGTICK);
+        setTick(LONGTICK);  // Instantly place the block
       }
       obj.new = false;
     });
@@ -164,7 +164,7 @@ function App() {
 
   // Long tick handler
   useEffect(() => {
-    if (tick === LONGTICK) {
+    if (tick >= LONGTICK) {
       let newDropping = dropping.moveDown();
       // If `dropping` can drop: drop `dropping` by one cell
       if (!isObstructed(newDropping)) {

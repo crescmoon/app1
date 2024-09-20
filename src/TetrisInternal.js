@@ -157,7 +157,6 @@ export class Tetromino {
     return new Tetromino({x: this.origin.x, y: this.origin.y + 1}, this.type, this.direction);
   }
 
-  // TODO: Implement moveLeft, moveRight, and rotate
   moveLeft() {
     return new Tetromino({x: this.origin.x - 1, y: this.origin.y}, this.type, this.direction);
   }
