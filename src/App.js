@@ -137,7 +137,7 @@ function App() {
       }
       setTick(0);
     }
-  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, clearFullRows, updateUpcomingList]);
+  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList]);
 
   // Key press handler
   useEffect(() => {
