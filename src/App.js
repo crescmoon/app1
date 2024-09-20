@@ -79,14 +79,13 @@ function App() {
     }
     newPlaced = newPlaced.filter((cell) => rows[cell.y] < GRID_WIDTH).map(
       (cell) => {
-        let newX = cell.x;
         let newY = cell.y;
         rowsToClear.forEach((row) => {
           if (cell.y < row) {
             newY++;
           }
         })
-        return {x: newX, y: newY, type: cell.type};
+        return {x: cell.x, y: newY, type: cell.type};
       }
     );
 
