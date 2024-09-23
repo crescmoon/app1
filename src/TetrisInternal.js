@@ -8,6 +8,8 @@ export const TETROMINOS = Object.freeze({
   Z: 7,
   NULL: 8
 })
+
+
 export const getTypeString = (type) => {
   switch (type) {
     case TETROMINOS.I:
@@ -29,6 +31,7 @@ export const getTypeString = (type) => {
   }
 }
 
+
 export function initialTopPosition(type) {
   if (type === TETROMINOS.I || type === TETROMINOS.O) {
     return {x: 4, y: 0};
@@ -37,9 +40,11 @@ export function initialTopPosition(type) {
   }
 }
 
+
 export function getRandom() {
   return Math.floor(Math.random() * 7) + 1;
 }
+
 
 export class Tetromino {
   constructor(origin, type, direction) {
@@ -166,11 +171,13 @@ export class Tetromino {
   }
 
   rotate(cw) {
+    // TODO: Make the default rotation cleaner
     let newTetromino = new Tetromino({x: this.origin.x, y: this.origin.y}, this.type, this.direction);
     newTetromino.defaultRotation(cw);
     return newTetromino;
   }
 }
+
 
 export function getCellClassName(type) {
   switch (type) {

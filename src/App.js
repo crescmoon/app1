@@ -19,6 +19,7 @@ function App() {
   const [score, setScore] = useState(0);
   const [debugMessage, setDebugMessage] = useState('');
 
+
   // Game logic functions
   // Creating an empty grid
   const createGrid = () => {
@@ -32,6 +33,7 @@ function App() {
     return grid;
   }
 
+
   // What to do on initialization or restart
   const init = useCallback(() => {
     setUpcomingList([getRandom(), getRandom(), getRandom(), getRandom(), getRandom()]);
@@ -42,6 +44,7 @@ function App() {
     setTick(0);
     setDebugMessage('Initialized');
   }, []);
+
 
   // Whether a tetromino is obstructed by `placed`
   const isObstructed = useCallback((tetromino) => {
@@ -58,6 +61,7 @@ function App() {
     }
     return false;
   }, [placed]);
+
 
   // Save tetromino to `placed` and clear full rows, return number of rows cleared
   const saveToPlaced = useCallback((tetromino) => {
@@ -93,6 +97,7 @@ function App() {
     return rowsToClear.length;
   }, [placed]);
 
+
   // Update `upcomingList` and pop the first element
   const updateUpcomingList = useCallback(() => {
     let newUpcomingList = [...upcomingList];
@@ -101,6 +106,7 @@ function App() {
     setUpcomingList(newUpcomingList);
     return popOut;
   }, [upcomingList]);
+
 
   // Key press handler
   const keyPressHandler = useCallback(() => {
@@ -125,11 +131,15 @@ function App() {
         }
       } else if (keyPressed === 'z') {
         let newDropping = dropping.rotate(false);
+        // TODO: Implement SRS
+        // TODO: Reset tick if rotation is successful and done at the "bottom"
         if (!isObstructed(newDropping)) {
           setDropping(newDropping);
         }
       } else if (keyPressed === 'x') {
         let newDropping = dropping.rotate(true);
+        // TODO: Implement SRS
+        // TODO: Reset tick if rotation is successful and done at the "bottom"
         if (!isObstructed(newDropping)) {
           setDropping(newDropping);
         }
@@ -139,17 +149,19 @@ function App() {
           setDropping(newDropping);
           newDropping = newDropping.moveDown();
         }
-        setTick(LONGTICK);  // Instantly place the block
+        setTick(LONGTICK);  // Trigger long tick right away
       }
       obj.new = false;
     });
   }, [keysHeldDown, dropping, isObstructed]); 
+
 
   // useEffect statements
   // Initial call to init()
   useEffect(() => {
     init();
   }, [init]);
+
 
   // Tick handler
   useEffect(() => {
@@ -160,6 +172,7 @@ function App() {
     }, TICK);
     return () => clearInterval(interval);
   }, [dropping, isObstructed, keyPressHandler]);
+
 
   // Long tick handler
   useEffect(() => {
@@ -188,6 +201,7 @@ function App() {
     }
   }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList]);
 
+
   // Key press handler
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -205,15 +219,15 @@ function App() {
     }
   }, [ keysHeldDown ]);
 
+
   // TODOs
-  // TODO: Implement how the dropping block reacts to movement commands in TetrisInternal.js
+  // TODO: Implement rotation correctly
 
   // TODO: Implement the hold command
 
   // TODO: Implement the game over system
 
   // TODO: Implement the pause system
-
 
 
   // Tetromino image loader
@@ -232,6 +246,7 @@ function App() {
       />
     );
   };
+
 
   // Grid loader
   const GridLoader = (props) => {
@@ -263,6 +278,7 @@ function App() {
     )
   };
 
+
   // Debug box
   const DebugBox = (props) => {
     return DEBUG ? (
@@ -285,6 +301,7 @@ function App() {
     ) : null;
   };
 
+
   // Left panel
   const LeftPanel = (props) => {
     return (
@@ -302,6 +319,7 @@ function App() {
     );
   }
 
+
   // Center panel
   const CenterPanel = (props) => {
     return (
@@ -313,6 +331,7 @@ function App() {
       </div>
     );
   }
+
 
   // Right panel
   const RightPanel = (props) => {
