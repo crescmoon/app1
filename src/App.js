@@ -38,15 +38,63 @@ function App() {
     setTick(0);
   }, []);
 
-  // TODO: Whether a tetromino is obstructed by `placed`
   const isObstructed = useCallback((tetromino) => {
+    if (tetromino.type === TETROMINOS.NULL) { return false; }
+    let tet = tetromino.getCellCoordinates();
+    for (let i = 0; i < 4; ++i) {
+      if (tet[i].x < 0 || tet[i].x >= GRID_WIDTH || tet[i].y >= GRID_HEIGHT) {
+        return true;
+      }
+      for (let j = 0; j < placed.length; ++j) {
+        if (tet[i].x === placed[j].x && tet[i].y === placed[j].y) {
+          return true;
+        }
+      }
+    }
     return false;
-  }, []);
+  }, [placed]);
 
-  // TODO: Save tetromino to `placed` and clear full rows, return number of rows cleared
+  // Save tetromino to `placed` and clear full rows, return number of rows cleared
+  const savePlaced = useCallback((tetromino) => {
+    let newPlaced = [...placed];
+    let cells = tetromino.getCellCoordinates().map((cell) => {
+      return {x: cell.x, y: cell.y, type: tetromino.type};
+    });
+    newPlaced = newPlaced.concat(cells);
+    let rows = Array(GRID_HEIGHT).fill(0);
+    newPlaced.forEach((cell) => {
+      rows[cell.y]++;
+    });
+    let rowsTrue = [];
+    for (let i = 0; i < GRID_HEIGHT; ++i) {
+      if (rows[i] === GRID_WIDTH) {
+        rowsTrue = [...rowsTrue, i];
+      }
+    }
+    for (let i = 0; i < rowsTrue.length; ++i) {
+      newPlaced = newPlaced.filter(c => c.y !== rowsTrue[i])
+      newPlaced = newPlaced.map(c => {
+        if (c.y < rowsTrue[i]) {
+          return {x: c.x, y: c.y + 1, type: c.type};
+        }
+        return c;
+      })
+    }
+    setPlaced(newPlaced);
+    return rowsTrue.length;
+  }, [placed]);
 
-  // TODO: Update `upcomingList` and pop the first element
-
+  // Update `upcomingList` and pop the first element
+  const updateUpcomingList = useCallback(() => {
+    let out = upcomingList[0];
+    let newUpcomingList = [];
+    for (let i = 1; i < 5; ++i) {
+      newUpcomingList = [...newUpcomingList, upcomingList[i]];
+    }
+    newUpcomingList = [...newUpcomingList, getRandom()];
+    setUpcomingList(newUpcomingList);
+    return out;
+  }, [upcomingList]);
 
   // useEffect statements
   // Initial call to init()
@@ -76,15 +124,18 @@ function App() {
       else {
         // Save `dropping` to `placed`, deselect `dropping`
         // Read `placed` and clear full rows
+        savePlaced(dropping);
 
         // Update score based on `rowsCleared`
 
         // Update `upcomingList` and select the first element as `dropping`
+        let droppingType = updateUpcomingList();
         // Place `dropping` at the top of the grid
+        setDropping(new Tetromino(initialTopPosition(droppingType), droppingType, 0));
       }
       setTick(0);
     }
-  }, [tick, dropping, placed, isObstructed]);
+  }, [tick, dropping, placed, isObstructed, savePlaced, updateUpcomingList]);
 
 
   // TODOs
