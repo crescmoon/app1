@@ -152,12 +152,24 @@ export class Tetromino {
       }
     }
   }
-
+  
+  clone() {
+    return new Tetromino({x: this.origin.x, y: this.origin.y}, this.type, this.direction);
+  }
   moveDown() {
     return new Tetromino({x: this.origin.x, y: this.origin.y + 1}, this.type, this.direction);
   }
-  
-  // TODO: Implement moveLeft, moveRight and rotate
+  moveLeft() {
+    return new Tetromino({x: this.origin.x - 1, y: this.origin.y}, this.type, this.direction);
+  }
+  moveRight() {
+    return new Tetromino({x: this.origin.x + 1, y: this.origin.y}, this.type, this.direction);
+  }
+  rotate(cw) {
+    let newTetromino = this.clone();
+    newTetromino.defaultRotation(cw);
+    return newTetromino;
+  }
 }
 
 export function getCellClassName(type) {

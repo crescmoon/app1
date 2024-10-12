@@ -6,7 +6,11 @@ const GRID_WIDTH = 10;
 const GRID_HEIGHT = 20;
 const TICK = 10;
 const LONGTICK = 100;  // Represents number of ticks before a long tick
-
+const STATUS = {
+  NOT_PRESSED: 0,
+  PRESSED: 1,
+  DONE: 2
+}
 
 function App() {
   const [upcomingList, setUpcomingList] = useState([TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL]);
@@ -14,6 +18,16 @@ function App() {
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [tick, setTick] = useState(0);
+  const [keyPressed, setKeyPressed] = useState({
+    a: STATUS.NOT_PRESSED,
+    s: STATUS.NOT_PRESSED,
+    d: STATUS.NOT_PRESSED,
+    w: STATUS.NOT_PRESSED,
+    c: STATUS.NOT_PRESSED,
+    z: STATUS.NOT_PRESSED,
+    esc: STATUS.NOT_PRESSED,
+    space: STATUS.NOT_PRESSED
+  });
 
   // Game logic functions
   // Creating an empty grid
@@ -106,10 +120,64 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(tick => tick + 1);
-      // TODO: Associate key press with commands
+      // Associate key press with commands
+      for (let key in keyPressed){
+        if (keyPressed[key] === STATUS.PRESSED) {
+          let newDropping = dropping.clone();
+          switch (key) {
+            case 'a':
+              newDropping = dropping.moveLeft();
+              if (!isObstructed(newDropping)) {
+                setDropping(newDropping);
+              }
+              break;
+            case 's':
+              newDropping = dropping.moveDown();
+              if (!isObstructed(newDropping)) {
+                setDropping(newDropping);
+                setTick(0);
+              } else {
+                setTick(LONGTICK);
+              }
+              break;
+            case 'd':
+              newDropping = dropping.moveRight();
+              if (!isObstructed(newDropping)) {
+                setDropping(newDropping);
+              }
+              break;
+            case 'w':
+              newDropping = dropping.rotate(true);
+              if (!isObstructed(newDropping)) {
+                setDropping(newDropping);
+              }
+              break;
+            case 'c':
+              break;
+            case 'z':
+              newDropping = dropping.rotate(false);
+              if (!isObstructed(newDropping)) {
+                setDropping(newDropping);
+              }
+              break;
+            case 'esc':
+              break;
+            case 'space':
+              while (!isObstructed(newDropping.moveDown())) {
+                newDropping = newDropping.moveDown();
+              }
+              setDropping(newDropping);
+              setTick(LONGTICK);
+              break;
+            default:
+              break;
+          }
+          keyPressed[key] = STATUS.DONE;
+        }
+      }
     }, TICK);
     return () => clearInterval(interval);
-  }, []);
+  }, [dropping, isObstructed, keyPressed]);
 
   // Long tick handler
   useEffect(() => {
@@ -136,7 +204,46 @@ function App() {
       setTick(0);
     }
   }, [tick, dropping, placed, isObstructed, savePlaced, updateUpcomingList]);
-
+  
+  // Key press handler
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      setKeyPressed(kp => {
+        switch (event.key) {
+          case 'a': if (kp.a === STATUS.NOT_PRESSED) { return {...kp, a: STATUS.PRESSED}; } break;
+          case 's': if (kp.s === STATUS.NOT_PRESSED) { return {...kp, s: STATUS.PRESSED}; } break;
+          case 'd': if (kp.d === STATUS.NOT_PRESSED) { return {...kp, d: STATUS.PRESSED}; } break;
+          case 'w': if (kp.w === STATUS.NOT_PRESSED) { return {...kp, w: STATUS.PRESSED}; } break;
+          case 'c': if (kp.c === STATUS.NOT_PRESSED) { return {...kp, c: STATUS.PRESSED}; } break;
+          case 'z': if (kp.z === STATUS.NOT_PRESSED) { return {...kp, z: STATUS.PRESSED}; } break;
+          case 'Escape': if (kp.esc === STATUS.NOT_PRESSED) { return {...kp, esc: STATUS.PRESSED}; } break;
+          case ' ': if (kp.space === STATUS.NOT_PRESSED) { return {...kp, space: STATUS.PRESSED}; } break;
+          default: return kp;
+        }
+      });
+    };
+    const handleKeyUp = (event) => {
+      setKeyPressed(kp => {
+        switch (event.key) {
+          case 'a': return {...kp, a: STATUS.NOT_PRESSED};
+          case 's': return {...kp, s: STATUS.NOT_PRESSED};
+          case 'd': return {...kp, d: STATUS.NOT_PRESSED};
+          case 'w': return {...kp, w: STATUS.NOT_PRESSED};
+          case 'c': return {...kp, c: STATUS.NOT_PRESSED};
+          case 'z': return {...kp, z: STATUS.NOT_PRESSED};
+          case 'Escape': return {...kp, esc: STATUS.NOT_PRESSED};
+          case ' ': return {...kp, space: STATUS.NOT_PRESSED};
+          default: return kp;
+        }
+      });
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [tick]);
 
   // TODOs
 
