@@ -6,19 +6,47 @@ const GRID_WIDTH = 10;
 const GRID_HEIGHT = 20;
 const TICK = 10;
 const LONGTICK = 100;  // Represents number of ticks before a long tick
+const STATUS = {
+  NOT_PRESSED: 0,
+  PRESSED: 1,
+  DONE: 2
+}
+const trackedKeys = {
+  a: "a",
+  ArrowLeft: "a",
+  s: "s",
+  ArrowDown: "s",
+  d: "d",
+  ArrowRight: "d",
+  w: "w",
+  ArrowUp: "w",
+  c: "c",
+  z: "z",
+  Escape: "esc",
+  " ": "space"
+}
 const DEBUG = true;
 
-
 function App() {
-  const [upcomingList, setUpcomingList] = useState([TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL]);
+  const [upcomingList, setUpcomingList] = useState([
+    TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL
+  ]);
   const [held, setHeld] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [tick, setTick] = useState(0);
-  const [keysHeldDown, setKeysHeldDown] = useState([]);
   const [score, setScore] = useState(0);
-  const [debugMessage, setDebugMessage] = useState('');
-
+  const [keyPressed, setKeyPressed] = useState({
+    a: STATUS.NOT_PRESSED,
+    s: STATUS.NOT_PRESSED,
+    d: STATUS.NOT_PRESSED,
+    w: STATUS.NOT_PRESSED,
+    c: STATUS.NOT_PRESSED,
+    z: STATUS.NOT_PRESSED,
+    esc: STATUS.NOT_PRESSED,
+    space: STATUS.NOT_PRESSED
+  });
+  const [debugMessage, setDebugMessage] = useState("");
 
   // Game logic functions
   // Creating an empty grid
@@ -33,7 +61,6 @@ function App() {
     return grid;
   }
 
-
   // What to do on initialization or restart
   const init = useCallback(() => {
     setUpcomingList([getRandom(), getRandom(), getRandom(), getRandom(), getRandom()]);
@@ -42,9 +69,8 @@ function App() {
     let dropType = getRandom();
     setDropping(new Tetromino(initialTopPosition(dropType), dropType, 0));
     setTick(0);
-    setDebugMessage('Initialized');
+    setDebugMessage("Initialized");
   }, []);
-
 
   // Whether a tetromino is obstructed by `placed`
   const isObstructed = useCallback((tetromino) => {
@@ -61,7 +87,6 @@ function App() {
     }
     return false;
   }, [placed]);
-
 
   // Save tetromino to `placed` and clear full rows, return number of rows cleared
   const saveToPlaced = useCallback((tetromino) => {
@@ -97,7 +122,6 @@ function App() {
     return rowsToClear.length;
   }, [placed]);
 
-
   // Update `upcomingList` and pop the first element
   const updateUpcomingList = useCallback(() => {
     let newUpcomingList = [...upcomingList];
@@ -106,55 +130,64 @@ function App() {
     setUpcomingList(newUpcomingList);
     return popOut;
   }, [upcomingList]);
-
-
-  // Key press handler
-  const keyPressHandler = useCallback(() => {
-    keysHeldDown.forEach((obj) => {
-      if (!obj.new) return;
-      let keyPressed = obj.key;
-      if (keyPressed === 'ArrowLeft') {
-        let newDropping = dropping.moveLeft();
-        if (!isObstructed(newDropping)) {
-          setDropping(newDropping);
+  
+  // Key mapper
+  const keyMapper = useCallback(() => {
+    for (let key in keyPressed){
+      if (keyPressed[key] === STATUS.PRESSED) {
+        let newDropping = dropping.clone();
+        switch (key) {
+          case 'a':
+            newDropping = dropping.moveLeft();
+            if (!isObstructed(newDropping)) {
+              setDropping(newDropping);
+            }
+            break;
+          case 's':
+            newDropping = dropping.moveDown();
+            if (!isObstructed(newDropping)) {
+              setDropping(newDropping);
+              setTick(0);
+            } else {
+              setTick(LONGTICK);
+            }
+            break;
+          case 'd':
+            newDropping = dropping.moveRight();
+            if (!isObstructed(newDropping)) {
+              setDropping(newDropping);
+            }
+            break;
+          case 'w':
+            newDropping = dropping.rotate(true);
+            if (!isObstructed(newDropping)) {
+              setDropping(newDropping);
+            }
+            break;
+          case 'c':
+            break;
+          case 'z':
+            newDropping = dropping.rotate(false);
+            if (!isObstructed(newDropping)) {
+              setDropping(newDropping);
+            }
+            break;
+          case 'esc':
+            break;
+          case 'space':
+            while (!isObstructed(newDropping.moveDown())) {
+              newDropping = newDropping.moveDown();
+            }
+            setDropping(newDropping);
+            setTick(LONGTICK);
+            break;
+          default:
+            break;
         }
-      } else if (keyPressed === 'ArrowRight') {
-        let newDropping = dropping.moveRight();
-        if (!isObstructed(newDropping)) {
-          setDropping(newDropping);
-        }
-      } else if (keyPressed === 'ArrowDown') {
-        let newDropping = dropping.moveDown();
-        if (!isObstructed(newDropping)) {
-          setDropping(newDropping);
-          setTick(0);  // Reset tick
-        }
-      } else if (keyPressed === 'z') {
-        let newDropping = dropping.rotate(false);
-        // TODO: Implement SRS
-        // TODO: Reset tick if rotation is successful and done at the "bottom"
-        if (!isObstructed(newDropping)) {
-          setDropping(newDropping);
-        }
-      } else if (keyPressed === 'x') {
-        let newDropping = dropping.rotate(true);
-        // TODO: Implement SRS
-        // TODO: Reset tick if rotation is successful and done at the "bottom"
-        if (!isObstructed(newDropping)) {
-          setDropping(newDropping);
-        }
-      } else if (keyPressed === ' ') {
-        let newDropping = dropping.moveDown();
-        while (!isObstructed(newDropping)) {
-          setDropping(newDropping);
-          newDropping = newDropping.moveDown();
-        }
-        setTick(LONGTICK);  // Trigger long tick right away
+        setKeyPressed(prev => ({...prev, [key]: STATUS.DONE}));
       }
-      obj.new = false;
-    });
-  }, [keysHeldDown, dropping, isObstructed]); 
-
+    }
+  }, [keyPressed, dropping, isObstructed]);
 
   // useEffect statements
   // Initial call to init()
@@ -162,17 +195,15 @@ function App() {
     init();
   }, [init]);
 
-
   // Tick handler
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(tick => tick + 1);
       // Associate key press with commands
-      keyPressHandler();
+      keyMapper();
     }, TICK);
     return () => clearInterval(interval);
-  }, [dropping, isObstructed, keyPressHandler]);
-
+  }, [keyMapper]);
 
   // Long tick handler
   useEffect(() => {
@@ -201,24 +232,30 @@ function App() {
     }
   }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList]);
 
-
   // Key press handler
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (keysHeldDown.find((obj) => obj.key === event.key)) return;
-      setKeysHeldDown(keysHeldDown => [...keysHeldDown, {key: event.key, new: true}]);
+      const key = trackedKeys[event.key];
+      if (key && keyPressed[key] === STATUS.NOT_PRESSED && !event.repeat) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.PRESSED}));
+      }
+      if (key && keyPressed[key] === STATUS.DONE && event.repeat) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.PRESSED}));
+      }
     };
     const handleKeyUp = (event) => {
-      setKeysHeldDown(keysHeldDown => keysHeldDown.filter((obj) => obj.key !== event.key));
+      const key = trackedKeys[event.key];
+      if (key) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.NOT_PRESSED}));
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-    }
-  }, [ keysHeldDown ]);
-
+    };
+  }, [keyPressed]);
 
   // TODOs
   // TODO: Implement rotation correctly
@@ -228,7 +265,6 @@ function App() {
   // TODO: Implement the game over system
 
   // TODO: Implement the pause system
-
 
   // Tetromino image loader
   const ImgLoader = (props) => {
@@ -246,7 +282,6 @@ function App() {
       />
     );
   };
-
 
   // Grid loader
   const GridLoader = (props) => {
@@ -278,7 +313,6 @@ function App() {
     )
   };
 
-
   // Debug box
   const DebugBox = (props) => {
     return DEBUG ? (
@@ -287,9 +321,6 @@ function App() {
           Debug
         </h3>
         <div className="box">
-          <h5 style={{color: "#fff", textAlign: "center"}}>
-            {`Keys: ${keysHeldDown.map((obj) => obj.key).join(', ')}`}
-          </h5>
           <h3 style={{color: "#fff", textAlign: "center"}}>
             {tick}
           </h3>
@@ -300,7 +331,6 @@ function App() {
       </div>
     ) : null;
   };
-
 
   // Left panel
   const LeftPanel = (props) => {
@@ -319,7 +349,6 @@ function App() {
     );
   }
 
-
   // Center panel
   const CenterPanel = (props) => {
     return (
@@ -331,7 +360,6 @@ function App() {
       </div>
     );
   }
-
 
   // Right panel
   const RightPanel = (props) => {
@@ -359,7 +387,7 @@ function App() {
     );
   }
   
-
+  // Main return
   return (
     <div className="App">
       <div className="game-wrapper">
