@@ -11,9 +11,22 @@ const STATUS = {
   PRESSED: 1,
   DONE: 2
 }
+const trackedKeys = {
+  a: "a",
+  s: "s",
+  d: "d",
+  w: "w",
+  c: "c",
+  z: "z",
+  Escape: "esc",
+  " ": "space"
+}
+const DEBUG = false;
 
 function App() {
-  const [upcomingList, setUpcomingList] = useState([TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL]);
+  const [upcomingList, setUpcomingList] = useState([
+    TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL
+  ]);
   const [held, setHeld] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
@@ -28,6 +41,7 @@ function App() {
     esc: STATUS.NOT_PRESSED,
     space: STATUS.NOT_PRESSED
   });
+  const [debugMessage, setDebugMessage] = useState("");
 
   // Game logic functions
   // Creating an empty grid
@@ -50,8 +64,10 @@ function App() {
     let dropType = getRandom();
     setDropping(new Tetromino(initialTopPosition(dropType), dropType, 0));
     setTick(0);
+    setDebugMessage("Initialized");
   }, []);
 
+  // Check if the tetromino is obstructed
   const isObstructed = useCallback((tetromino) => {
     if (tetromino.type === TETROMINOS.NULL) { return false; }
     let tet = tetromino.getCellCoordinates();
@@ -208,34 +224,19 @@ function App() {
   // Key press handler
   useEffect(() => {
     const handleKeyDown = (event) => {
-      setKeyPressed(kp => {
-        switch (event.key) {
-          case 'a': if (kp.a === STATUS.NOT_PRESSED) { return {...kp, a: STATUS.PRESSED}; } break;
-          case 's': if (kp.s === STATUS.NOT_PRESSED) { return {...kp, s: STATUS.PRESSED}; } break;
-          case 'd': if (kp.d === STATUS.NOT_PRESSED) { return {...kp, d: STATUS.PRESSED}; } break;
-          case 'w': if (kp.w === STATUS.NOT_PRESSED) { return {...kp, w: STATUS.PRESSED}; } break;
-          case 'c': if (kp.c === STATUS.NOT_PRESSED) { return {...kp, c: STATUS.PRESSED}; } break;
-          case 'z': if (kp.z === STATUS.NOT_PRESSED) { return {...kp, z: STATUS.PRESSED}; } break;
-          case 'Escape': if (kp.esc === STATUS.NOT_PRESSED) { return {...kp, esc: STATUS.PRESSED}; } break;
-          case ' ': if (kp.space === STATUS.NOT_PRESSED) { return {...kp, space: STATUS.PRESSED}; } break;
-          default: return kp;
-        }
-      });
+      const key = trackedKeys[event.key];
+      if (key && keyPressed[key] === STATUS.NOT_PRESSED && !event.repeat) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.PRESSED}));
+      }
+      if (key && keyPressed[key] === STATUS.DONE && event.repeat) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.PRESSED}));
+      }
     };
     const handleKeyUp = (event) => {
-      setKeyPressed(kp => {
-        switch (event.key) {
-          case 'a': return {...kp, a: STATUS.NOT_PRESSED};
-          case 's': return {...kp, s: STATUS.NOT_PRESSED};
-          case 'd': return {...kp, d: STATUS.NOT_PRESSED};
-          case 'w': return {...kp, w: STATUS.NOT_PRESSED};
-          case 'c': return {...kp, c: STATUS.NOT_PRESSED};
-          case 'z': return {...kp, z: STATUS.NOT_PRESSED};
-          case 'Escape': return {...kp, esc: STATUS.NOT_PRESSED};
-          case ' ': return {...kp, space: STATUS.NOT_PRESSED};
-          default: return kp;
-        }
-      });
+      const key = trackedKeys[event.key];
+      if (key) {
+        setKeyPressed(prev => ({...prev, [key]: STATUS.NOT_PRESSED}));
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -243,13 +244,9 @@ function App() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tick]);
+  }, [keyPressed]);
 
   // TODOs
-
-  // TODO: Implement key press handler
-
-  // TODO: Implement how the dropping block reacts to movement commands in TetrisInternal.js
 
   // TODO: Implement the hold command
 
@@ -258,8 +255,6 @@ function App() {
   // TODO: Implement the game over system
 
   // TODO: Implement the pause system
-
-
 
   // Tetromino image loader
   const ImgLoader = (props) => {
@@ -309,6 +304,25 @@ function App() {
     )
   };
 
+  // Debug box
+  const DebugBox = (props) => {
+    return DEBUG ? (
+      <div>
+        <h3 style={{color: "#fff", textAlign: "center"}}>
+          Debug
+        </h3>
+        <div className="box">
+          <h3 style={{color: "#fff", textAlign: "center"}}>
+            {tick}
+          </h3>
+          <p style={{color: "#fff", textAlign: "center", fontSize: "10px"}}>
+            {debugMessage}
+          </p>
+        </div>
+      </div>
+    ) : null;
+  };
+
   // Left panel
   const LeftPanel = (props) => {
     return (
@@ -321,6 +335,7 @@ function App() {
             <ImgLoader name={getTypeString(held.type)} paddingTop="20px" paddingBottom="20px" />
           }
         </div>
+        <DebugBox/>
       </div>
     );
   }
@@ -363,7 +378,7 @@ function App() {
     );
   }
   
-
+  // Main return
   return (
     <div className="App">
       <div className="game-wrapper">
