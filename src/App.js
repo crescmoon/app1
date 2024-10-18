@@ -13,9 +13,13 @@ const STATUS = {
 }
 const trackedKeys = {
   a: "a",
+  ArrowLeft: "a",
   s: "s",
+  ArrowDown: "s",
   d: "d",
+  ArrowRight: "d",
   w: "w",
+  ArrowUp: "w",
   c: "c",
   z: "z",
   Escape: "esc",
