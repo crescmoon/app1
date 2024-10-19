@@ -17,6 +17,21 @@
   height: auto;
 }
 
+.overlay-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 2px solid #333;
+  width: 300px;
+  height: 600px;
+}
+
+.overlay-button {
+  font-size: medium;
+  text-align: center;
+  padding: 10px 20px;
+}
+
 .tetris-grid {
   display: inline-block;
   border: 2px solid #333;

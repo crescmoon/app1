@@ -32,6 +32,7 @@ function App() {
     TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL, TETROMINOS.NULL
   ]);
   const [held, setHeld] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
+  const [canHold, setCanHold] = useState(true);
   const [placed, setPlaced] = useState([]);
   const [dropping, setDropping] = useState(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
   const [tick, setTick] = useState(0);
@@ -47,6 +48,8 @@ function App() {
     space: STATUS.NOT_PRESSED
   });
   const [debugMessage, setDebugMessage] = useState("");
+  const [gameIsOver, setGameIsOver] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Game logic functions
   // Creating an empty grid
@@ -65,11 +68,21 @@ function App() {
   const init = useCallback(() => {
     setUpcomingList([getRandom(), getRandom(), getRandom(), getRandom(), getRandom()]);
     setHeld(new Tetromino({ x: 0, y: 0}, TETROMINOS.NULL, 0));
+    setCanHold(true);
     setPlaced([]);
     let dropType = getRandom();
     setDropping(new Tetromino(initialTopPosition(dropType), dropType, 0));
     setTick(0);
     setDebugMessage("Initialized");
+    setScore(0);
+    setGameIsOver(false);
+    setIsPaused(false);
+  }, []);
+
+  // Game over
+  const gameOver = useCallback(() => {
+    setGameIsOver(true);
+    setDebugMessage("Game Over");
   }, []);
 
   // Whether a tetromino is obstructed by `placed`
@@ -122,6 +135,26 @@ function App() {
     return rowsToClear.length;
   }, [placed]);
 
+  // Try to place a new tetromino at the top
+  const placeDropping = useCallback((dropType) => {
+    let newDropping = new Tetromino(initialTopPosition(dropType), dropType, 0);
+    if (isObstructed(newDropping)){
+      newDropping.direction = 1;
+      if (isObstructed(newDropping)){
+        newDropping.direction = 2;
+        if (isObstructed(newDropping)){
+          newDropping.direction = 3;
+          if (isObstructed(newDropping)){
+            gameOver();
+            return false;
+          }
+        }
+      }
+    }
+    setDropping(newDropping);
+    return true;
+  }, [isObstructed, gameOver]);
+
   // Update `upcomingList` and pop the first element
   const updateUpcomingList = useCallback(() => {
     let newUpcomingList = [...upcomingList];
@@ -165,6 +198,18 @@ function App() {
             }
             break;
           case 'c':
+            if (!canHold) break;
+            if (held.type === TETROMINOS.NULL){
+              setHeld(dropping);
+              placeDropping(updateUpcomingList());
+              setTick(0);
+            } else {
+              let dropType = held.type;
+              setHeld(dropping);
+              placeDropping(dropType);
+              setTick(0);
+            }
+            setCanHold(false);
             break;
           case 'z':
             newDropping = dropping.rotate(false);
@@ -173,6 +218,7 @@ function App() {
             }
             break;
           case 'esc':
+            setIsPaused(true);
             break;
           case 'space':
             while (!isObstructed(newDropping.moveDown())) {
@@ -187,7 +233,7 @@ function App() {
         setKeyPressed(prev => ({...prev, [key]: STATUS.DONE}));
       }
     }
-  }, [keyPressed, dropping, isObstructed]);
+  }, [keyPressed, dropping, isObstructed, canHold, held, updateUpcomingList, placeDropping]);
 
   // useEffect statements
   // Initial call to init()
@@ -198,12 +244,13 @@ function App() {
   // Tick handler
   useEffect(() => {
     const interval = setInterval(() => {
+      if (gameIsOver || isPaused) return;
       setTick(tick => tick + 1);
       // Associate key press with commands
       keyMapper();
     }, TICK);
     return () => clearInterval(interval);
-  }, [keyMapper]);
+  }, [keyMapper, gameIsOver, isPaused]);
 
   // Long tick handler
   useEffect(() => {
@@ -225,12 +272,12 @@ function App() {
 
         // Update `upcomingList` and select the first element as `dropping`
         // Place `dropping` at the top of the grid
-        let dropType = updateUpcomingList();
-        setDropping(new Tetromino(initialTopPosition(dropType), dropType, 0));
+        placeDropping(updateUpcomingList());
+        setCanHold(true);
       }
       setTick(0);
     }
-  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList]);
+  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList, placeDropping]);
 
   // Key press handler
   useEffect(() => {
@@ -260,12 +307,6 @@ function App() {
   // TODOs
   // TODO: Implement rotation correctly
 
-  // TODO: Implement the hold command
-
-  // TODO: Implement the game over system
-
-  // TODO: Implement the pause system
-
   // Tetromino image loader
   const ImgLoader = (props) => {
     return (
@@ -283,6 +324,40 @@ function App() {
     );
   };
 
+  // Game over box
+  const GameOverBox = (props) => {
+    return (
+      <div className="overlay-box" style={{padding: "20px"}}>
+        <h1 style={{color: "#fff", textAlign: "center"}}>
+          GAME OVER
+        </h1>
+        <h2 style={{color: "#fff", textAlign: "center"}}>
+          Score: {score}
+        </h2>
+        <button className="overlay-button" onClick={init}>
+          Restart
+        </button>
+      </div>
+    )
+  }
+
+  // Pause box
+  const PauseBox = (props) => {
+    return (
+      <div className="overlay-box" style={{padding: "20px"}}>
+        <h1 style={{color: "#fff", textAlign: "center"}}>
+          PAUSED
+        </h1>
+        <button className="overlay-button" onClick={() => setIsPaused(false)}>
+          Resume
+        </button>
+        <button className="overlay-button" onClick={init}>
+          Restart
+        </button>
+      </div>
+    )
+  }
+
   // Grid loader
   const GridLoader = (props) => {
     let grid = createGrid();
@@ -296,7 +371,9 @@ function App() {
         grid[cell.y][cell.x] = dropping.type;
       }
     })
-
+    
+    if (gameIsOver) return <GameOverBox />;
+    if (isPaused) return <PauseBox />;
     return (
       <div className="tetris-grid" style={{padding: "20px"}}>
         {grid.map((row, rowIndex) => (
