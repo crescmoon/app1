@@ -46,6 +46,41 @@ export function getRandom() {
 }
 
 
+export function superRotationTests(type, initDirection, newDirection) {
+  switch (type) {
+    case TETROMINOS.J:
+    case TETROMINOS.L:
+    case TETROMINOS.S:
+    case TETROMINOS.T:
+    case TETROMINOS.Z:
+      switch (`${initDirection}, ${newDirection}`) {
+        case '0, 1': return [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}];
+        case '1, 0': return [{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: -2}, {x: 1, y: -2}];
+        case '1, 2': return [{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: -2}, {x: 1, y: -2}];
+        case '2, 1': return [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}];
+        case '2, 3': return [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}];
+        case '3, 2': return [{x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -2}, {x: -1, y: -2}];
+        case '3, 0': return [{x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -2}, {x: -1, y: -2}];
+        case '0, 3': return [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}];
+        default: return [];
+      }
+    case TETROMINOS.I:
+      switch (`${initDirection}, ${newDirection}`) {
+        case '0, 1': return [{x: -2, y: 0}, {x: 1, y: 0}, {x: -2, y: 1}, {x: 1, y: -2}];
+        case '1, 0': return [{x: 2, y: 0}, {x: -1, y: 0}, {x: 2, y: -1}, {x: -1, y: 2}];
+        case '1, 2': return [{x: -1, y: 0}, {x: 2, y: 0}, {x: -1, y: -2}, {x: 2, y: 1}];
+        case '2, 1': return [{x: 1, y: 0}, {x: -2, y: 0}, {x: 1, y: 2}, {x: -2, y: -1}];
+        case '2, 3': return [{x: 2, y: 0}, {x: -1, y: 0}, {x: 2, y: -1}, {x: -1, y: 2}];
+        case '3, 2': return [{x: -2, y: 0}, {x: 1, y: 0}, {x: -2, y: 1}, {x: 1, y: -2}];
+        case '3, 0': return [{x: 1, y: 0}, {x: -2, y: 0}, {x: 1, y: 2}, {x: -2, y: -1}];
+        case '0, 3': return [{x: -1, y: 0}, {x: 2, y: 0}, {x: -1, y: -2}, {x: 2, y: 1}];
+        default: return [];
+      }
+    default: return [];
+  }
+}
+
+
 export class Tetromino {
   constructor(origin, type, direction) {
     this.origin = origin;
@@ -88,10 +123,10 @@ export class Tetromino {
         break;
       case TETROMINOS.O:
         switch (direction) {
-          case 0: alt = [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]; break;
-          case 1: alt = [{x: -1, y: 0}, {x: 0, y: 0}, {x: -1, y: 1}, {x: 0, y: 1}]; break;
-          case 2: alt = [{x: -1, y: -1}, {x: 0, y: -1}, {x: -1, y: 0}, {x: 0, y: 0}]; break;
-          case 3: alt = [{x: 0, y: -1}, {x: 1, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}]; break;
+          case 0:
+          case 1:
+          case 2:
+          case 3: alt = [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}]; break;
           default: alt = [];
         }
         break;

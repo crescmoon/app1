@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback } from 'react';
 import './App.css';
-import {TETROMINOS, Tetromino, getCellClassName, getRandom, getTypeString, initialTopPosition} from './TetrisInternal';
+import {TETROMINOS, Tetromino, getCellClassName, getRandom, getTypeString, initialTopPosition, superRotationTests} from './TetrisInternal';
 
 const GRID_WIDTH = 10;
 const GRID_HEIGHT = 20;
@@ -163,6 +163,24 @@ function App() {
     setUpcomingList(newUpcomingList);
     return popOut;
   }, [upcomingList]);
+
+  // Super rotation system
+  const superRotate = useCallback((tetromino, cw) => {
+    let newTetromino = tetromino.rotate(cw);
+    if (!isObstructed(newTetromino)) return newTetromino;
+    let tests = superRotationTests(tetromino.type, tetromino.direction, newTetromino.direction);
+    setDebugMessage(`${tests.length} tests`);
+    for (let i = 0; i < tests.length; ++i) {
+      let test = tests[i];
+      let candidate = new Tetromino(
+        {x: newTetromino.origin.x + test.x, y: newTetromino.origin.y + test.y},
+        newTetromino.type,
+        newTetromino.direction
+      );
+      if (!isObstructed(candidate)) return candidate;
+    }
+    return tetromino;
+  }, [isObstructed]);
   
   // Key mapper
   const keyMapper = useCallback(() => {
@@ -192,10 +210,7 @@ function App() {
             }
             break;
           case 'w':
-            newDropping = dropping.rotate(true);
-            if (!isObstructed(newDropping)) {
-              setDropping(newDropping);
-            }
+            setDropping(superRotate(dropping, true));
             break;
           case 'c':
             if (!canHold) break;
@@ -212,10 +227,7 @@ function App() {
             setCanHold(false);
             break;
           case 'z':
-            newDropping = dropping.rotate(false);
-            if (!isObstructed(newDropping)) {
-              setDropping(newDropping);
-            }
+            setDropping(superRotate(dropping, false));
             break;
           case 'esc':
             setIsPaused(true);
@@ -233,7 +245,18 @@ function App() {
         setKeyPressed(prev => ({...prev, [key]: STATUS.DONE}));
       }
     }
-  }, [keyPressed, dropping, isObstructed, canHold, held, updateUpcomingList, placeDropping]);
+  }, [keyPressed, dropping, isObstructed, canHold, held, updateUpcomingList, placeDropping, superRotate]);
+
+  // Score calculator
+  const calculateScore = useCallback((rowsCleared) => {
+    switch (rowsCleared) {
+      case 1: return 100;
+      case 2: return 300;
+      case 3: return 500;
+      case 4: return 800;
+      default: return 0;
+    }
+  }, []);
 
   // useEffect statements
   // Initial call to init()
@@ -268,7 +291,7 @@ function App() {
         let rowsCleared = saveToPlaced(dropping);
 
         // Update score based on `rowsCleared`
-        setScore(score => score + rowsCleared * 100);
+        setScore(score => score + calculateScore(rowsCleared));
 
         // Update `upcomingList` and select the first element as `dropping`
         // Place `dropping` at the top of the grid
@@ -277,7 +300,7 @@ function App() {
       }
       setTick(0);
     }
-  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList, placeDropping]);
+  }, [tick, dropping, score, placed, isObstructed, saveToPlaced, updateUpcomingList, placeDropping, calculateScore]);
 
   // Key press handler
   useEffect(() => {
@@ -303,10 +326,7 @@ function App() {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [keyPressed]);
-
-  // TODOs
-  // TODO: Implement rotation correctly
-
+  
   // Tetromino image loader
   const ImgLoader = (props) => {
     return (
