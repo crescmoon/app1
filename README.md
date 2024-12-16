@@ -55,13 +55,13 @@ A React-based minimalist implementation of the classic Tetris game.
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/crescmoon/app1
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd tetris-game
+   cd app1
    ```
 
 3. Install dependencies:
