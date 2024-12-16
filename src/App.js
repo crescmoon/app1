@@ -25,7 +25,7 @@ const trackedKeys = {
   Escape: "esc",
   " ": "space"
 }
-const DEBUG = true;
+const DEBUG = false;
 
 function App() {
   const [upcomingList, setUpcomingList] = useState([
@@ -86,7 +86,7 @@ function App() {
   }, []);
 
   // Whether a tetromino is obstructed by `placed`
-  const isObstructed = useCallback((tetromino) => {
+  const isObstructed = useCallback((tetromino, useDropping = false) => {
     if (tetromino.type === TETROMINOS.NULL) return false;
     let cells = tetromino.getCellCoordinates();
     for (let i = 0; i < 4; i++) {
@@ -97,9 +97,13 @@ function App() {
       if (placed.find((placedCell) => placedCell.x === cell.x && placedCell.y === cell.y)) {
         return true;
       }
+      if (useDropping &&
+        dropping.getCellCoordinates().find(droppingCell => 
+          droppingCell.x === cell.x && droppingCell.y === cell.y
+        )) return true;
     }
     return false;
-  }, [placed]);
+  }, [placed, dropping]);
 
   // Save tetromino to `placed` and clear full rows, return number of rows cleared
   const saveToPlaced = useCallback((tetromino) => {
@@ -138,21 +142,26 @@ function App() {
   // Try to place a new tetromino at the top
   const placeDropping = useCallback((dropType) => {
     let newDropping = new Tetromino(initialTopPosition(dropType), dropType, 0);
-    if (isObstructed(newDropping)){
-      newDropping.direction = 1;
-      if (isObstructed(newDropping)){
-        newDropping.direction = 2;
-        if (isObstructed(newDropping)){
-          newDropping.direction = 3;
-          if (isObstructed(newDropping)){
-            gameOver();
-            return false;
-          }
-        }
+    // `dropping` is not yet placed in `placed`, so set `useDropping` to true
+    // Try to find a new position for `newDropping` favorable to the player
+    for (let d = 0; d < 4; d++) {
+      newDropping.direction = d;
+      if (!isObstructed(newDropping, true)) {
+        setDropping(newDropping);
+        return;
       }
     }
-    setDropping(newDropping);
-    return true;
+    // Allow a position that is above the grid 1 cell
+    newDropping.origin.y--;
+    for (let d = 0; d < 4; d++) {
+      newDropping.direction = d;
+      if (!isObstructed(newDropping, true)) {
+        setDropping(newDropping);
+        return;
+      }
+    }
+    // Game over at failure
+    gameOver();
   }, [isObstructed, gameOver]);
 
   // Update `upcomingList` and pop the first element
